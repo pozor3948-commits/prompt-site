@@ -98,6 +98,22 @@ function startSnakeGame() {
     const keys = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
     if (keys[event.key]) { event.preventDefault(); turn(...keys[event.key]); }
   };
+  let swipeOrigin = null;
+  const onPointerDown = event => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    swipeOrigin = { x: event.clientX, y: event.clientY };
+    if (canvas.setPointerCapture) canvas.setPointerCapture(event.pointerId);
+  };
+  const onPointerMove = event => {
+    if (!swipeOrigin || !active) return;
+    const dx = event.clientX - swipeOrigin.x;
+    const dy = event.clientY - swipeOrigin.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+    if (Math.abs(dx) > Math.abs(dy)) turn(dx > 0 ? 1 : -1, 0);
+    else turn(0, dy > 0 ? 1 : -1);
+    swipeOrigin = { x: event.clientX, y: event.clientY };
+  };
+  const onPointerUp = () => { swipeOrigin = null; };
   document.addEventListener('keydown', onKey);
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointermove', onPointerMove);
