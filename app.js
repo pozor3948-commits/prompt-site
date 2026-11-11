@@ -171,7 +171,7 @@ $('generate-btn').addEventListener('click', async () => {
   try {
     const response = await fetch('/api/prompt', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode, text, target: $('target').value, detail: $('detail').value, wishes: $('tone').value.trim() })
+      body: JSON.stringify({ mode, text, target: $('target').value, detail: $('detail').value, language: $('language').value, wishes: $('tone').value.trim() })
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || 'Не удалось получить ответ. Попробуй ещё раз.');
