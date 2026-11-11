@@ -31,3 +31,4 @@
 .snake-eta{font-size:10px;color:#8de8d8;text-align:right;max-width:210px;line-height:1.4}
 .snake-eta.is-waiting{color:#c6b8ff}
 @media(max-width:560px){.snake-eta{font-size:9px;max-width:155px}}
+\n/* Snake board uses the full result panel; mobile steering is swipe-based. */\n.snake-loading{max-width:none;width:100%;}\n.snake-board{width:100%;}\n#snake-canvas{width:100%;touch-action:none;cursor:crosshair;}\n.snake-controls{display:none!important;}\n@media(max-width:800px){.snake-loading{max-width:none;width:100%;}}\n
