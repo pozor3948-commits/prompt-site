@@ -4,6 +4,27 @@ let mode = 'create';
 let currentPrompt = '';
 let toastTimer;
 let stopSnakeGame = null;
+let stopEtaTimer = null;
+
+function startEtaTimer(estimatedSeconds) {
+  if (stopEtaTimer) stopEtaTimer();
+  const eta = $('snake-eta');
+  const startedAt = Date.now();
+  const render = () => {
+    const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    const remaining = estimatedSeconds - elapsed;
+    if (remaining > 0) {
+      eta.textContent = `Ориентировочно ещё ${remaining} сек.`;
+      eta.classList.remove('is-waiting');
+    } else {
+      eta.textContent = 'Генерация занимает больше обычного — ещё немного…';
+      eta.classList.add('is-waiting');
+    }
+  };
+  render();
+  const interval = setInterval(render, 1000);
+  stopEtaTimer = () => { clearInterval(interval); stopEtaTimer = null; };
+}
 
 function startSnakeGame() {
   if (stopSnakeGame) stopSnakeGame();
@@ -124,8 +145,10 @@ $('generate-btn').addEventListener('click', async () => {
   $('result-state').classList.remove('ready');
   $('result-state').innerHTML = '<i></i> ИИ работает';
   $('result-content').className = 'result-content';
-  $('result-content').innerHTML = `<div class="snake-loading"><div class="snake-loading-head"><div><span class="snake-live-dot"></span><strong>Генерирую твой промпт</strong><small>Пока ИИ работает — сыграем?</small></div><div class="snake-score-box">СЧЁТ <b id="snake-score">0</b></div></div><div class="snake-board"><canvas id="snake-canvas" width="640" height="320" role="img" aria-label="Игра Змейка. Собирай светящиеся точки и не врезайся в стены или себя."></canvas><div class="snake-overlay" id="snake-overlay" hidden><strong>Готов играть?</strong><span>Собирай точки и набирай очки</span><button id="snake-restart" type="button">Начать игру</button></div></div><div class="snake-game-footer"><span>Управление: стрелки или WASD</span><span>Собирай ✦ точки</span></div><div class="snake-controls" id="snake-controls" aria-label="Управление змейкой"><button type="button" data-dir="up" aria-label="Вверх">↑</button><div><button type="button" data-dir="left" aria-label="Влево">←</button><button type="button" data-dir="down" aria-label="Вниз">↓</button><button type="button" data-dir="right" aria-label="Вправо">→</button></div></div></div>`;
+  $('result-content').innerHTML = `<div class="snake-loading"><div class="snake-loading-head"><div><span class="snake-live-dot"></span><strong>Генерирую твой промпт</strong><small>Пока ИИ работает — сыграем?</small></div><div class="snake-status-stack"><div class="snake-score-box">СЧЁТ <b id="snake-score">0</b></div><div class="snake-eta" id="snake-eta" role="status" aria-live="off">Ориентировочно ещё 18 сек.</div></div></div><div class="snake-board"><canvas id="snake-canvas" width="640" height="320" role="img" aria-label="Игра Змейка. Собирай светящиеся точки и не врезайся в стены или себя."></canvas><div class="snake-overlay" id="snake-overlay" hidden><strong>Готов играть?</strong><span>Собирай точки и набирай очки</span><button id="snake-restart" type="button">Начать игру</button></div></div><div class="snake-game-footer"><span>Управление: стрелки или WASD</span><span>Собирай ✦ точки</span></div><div class="snake-controls" id="snake-controls" aria-label="Управление змейкой"><button type="button" data-dir="up" aria-label="Вверх">↑</button><div><button type="button" data-dir="left" aria-label="Влево">←</button><button type="button" data-dir="down" aria-label="Вниз">↓</button><button type="button" data-dir="right" aria-label="Вправо">→</button></div></div></div>`;
   startSnakeGame();
+  const estimatedSeconds = Math.min(45, 18 + Math.floor(text.length / 350) + ($('detail').selectedIndex === 2 ? 7 : 0));
+  startEtaTimer(estimatedSeconds);
   $('result-footer').hidden = true;
   try {
     const response = await fetch('/api/prompt', {
@@ -136,6 +159,7 @@ $('generate-btn').addEventListener('click', async () => {
     if (!response.ok) throw new Error(data.error || 'Не удалось получить ответ. Попробуй ещё раз.');
     if (!data.prompt) throw new Error('ИИ вернул пустой результат. Попробуй ещё раз.');
     if (stopSnakeGame) stopSnakeGame();
+    if (stopEtaTimer) stopEtaTimer();
     currentPrompt = data.prompt;
     const result = $('result-content');
     result.className = 'result-content has-result';
@@ -146,6 +170,7 @@ $('generate-btn').addEventListener('click', async () => {
     $('result-footer').hidden = false;
   } catch (error) {
     if (stopSnakeGame) stopSnakeGame();
+    if (stopEtaTimer) stopEtaTimer();
     $('result-content').className = 'result-content';
     $('result-content').innerHTML = '<div class="empty-visual"><div class="core">!</div></div><h3>Не получилось создать промпт</h3><p></p>';
     $('result-content').querySelector('p').textContent = error.message;
