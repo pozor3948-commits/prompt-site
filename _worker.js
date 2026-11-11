@@ -12,7 +12,7 @@ const SYSTEM_PROMPT = `Ты — эксперт по prompt engineering и пос
 
 async function handlePrompt(request, env) {
   if (!env.OPENROUTER_API_KEY) {
-    return json({ error: 'На сервере не задан OPENROUTER_API_KEY. Добавь секрет в настройках Cloudflare Pages.' }, 500);
+    return json({ error: 'На сервере не задан OPENROUTER_API_KEY. Добавь секрет в настройках Cloudflare Workers.' }, 500);
   }
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Некорректный формат запроса.' }, 400); }
