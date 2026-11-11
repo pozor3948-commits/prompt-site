@@ -50,11 +50,13 @@ function startSnakeGame() {
     ctx.fillStyle = '#0a0e18';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'rgba(160,176,210,.16)';
-    for (let y = 8; y < rows; y++) for (let x = 8; x < cols; x++) {
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
       ctx.beginPath(); ctx.arc(x * cell + cell / 2, y * cell + cell / 2, 1.15, 0, Math.PI * 2); ctx.fill();
     }
     ctx.shadowBlur = 13; ctx.shadowColor = '#6de4d0'; ctx.fillStyle = '#6de4d0';
-    ctx.beginPath(); ctx.arc(food.x * cell + cell / 2, food.y * cell + cell / 2, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    const fx = food.x * cell + cell / 2, fy = food.y * cell + cell / 2;
+    ctx.moveTo(fx, fy - 7); ctx.lineTo(fx + 6, fy); ctx.lineTo(fx, fy + 7); ctx.lineTo(fx - 6, fy); ctx.closePath(); ctx.fill();
     snake.forEach((part, index) => {
       ctx.shadowColor = index === 0 ? '#b9a4ff' : '#6de4d0';
       ctx.shadowBlur = index === 0 ? 15 : 8;
@@ -96,19 +98,35 @@ function startSnakeGame() {
     const keys = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
     if (keys[event.key]) { event.preventDefault(); turn(...keys[event.key]); }
   };
-  const onControl = event => {
-    const button = event.target.closest('[data-dir]');
-    if (!button) return;
-    const dirs = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-    turn(...dirs[button.dataset.dir]);
+  let swipeOrigin = null;
+  const onPointerDown = event => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    swipeOrigin = { x: event.clientX, y: event.clientY };
+    if (canvas.setPointerCapture) canvas.setPointerCapture(event.pointerId);
   };
+  const onPointerMove = event => {
+    if (!swipeOrigin || !active) return;
+    const dx = event.clientX - swipeOrigin.x;
+    const dy = event.clientY - swipeOrigin.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+    if (Math.abs(dx) > Math.abs(dy)) turn(dx > 0 ? 1 : -1, 0);
+    else turn(0, dy > 0 ? 1 : -1);
+    swipeOrigin = { x: event.clientX, y: event.clientY };
+  };
+  const onPointerUp = () => { swipeOrigin = null; };
   document.addEventListener('keydown', onKey);
-  $('snake-controls').addEventListener('click', onControl);
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointermove', onPointerMove);
+  canvas.addEventListener('pointerup', onPointerUp);
+  canvas.addEventListener('pointercancel', onPointerUp);
   restartBtn.addEventListener('click', reset);
   stopSnakeGame = () => {
     active = false; clearInterval(timer);
     document.removeEventListener('keydown', onKey);
-    $('snake-controls').removeEventListener('click', onControl);
+    canvas.removeEventListener('pointerdown', onPointerDown);
+    canvas.removeEventListener('pointermove', onPointerMove);
+    canvas.removeEventListener('pointerup', onPointerUp);
+    canvas.removeEventListener('pointercancel', onPointerUp);
     restartBtn.removeEventListener('click', reset);
     stopSnakeGame = null;
   };
@@ -145,7 +163,7 @@ $('generate-btn').addEventListener('click', async () => {
   $('result-state').classList.remove('ready');
   $('result-state').innerHTML = '<i></i> ИИ работает';
   $('result-content').className = 'result-content';
-  $('result-content').innerHTML = `<div class="snake-loading"><div class="snake-loading-head"><div><span class="snake-live-dot"></span><strong>Генерирую твой промпт</strong><small>Пока ИИ работает — сыграем?</small></div><div class="snake-status-stack"><div class="snake-score-box">СЧЁТ <b id="snake-score">0</b></div><div class="snake-eta" id="snake-eta" role="status" aria-live="off">Ориентировочно ещё 18 сек.</div></div></div><div class="snake-board"><canvas id="snake-canvas" width="640" height="320" role="img" aria-label="Игра Змейка. Собирай светящиеся точки и не врезайся в стены или себя."></canvas><div class="snake-overlay" id="snake-overlay" hidden><strong>Готов играть?</strong><span>Собирай точки и набирай очки</span><button id="snake-restart" type="button">Начать игру</button></div></div><div class="snake-game-footer"><span>Управление: стрелки или WASD</span><span>Собирай ✦ точки</span></div><div class="snake-controls" id="snake-controls" aria-label="Управление змейкой"><button type="button" data-dir="up" aria-label="Вверх">↑</button><div><button type="button" data-dir="left" aria-label="Влево">←</button><button type="button" data-dir="down" aria-label="Вниз">↓</button><button type="button" data-dir="right" aria-label="Вправо">→</button></div></div></div>`;
+  $('result-content').innerHTML = `<div class="snake-loading"><div class="snake-loading-head"><div><span class="snake-live-dot"></span><strong>Генерирую твой промпт</strong><small>Пока ИИ работает — сыграем?</small></div><div class="snake-status-stack"><div class="snake-score-box">СЧЁТ <b id="snake-score">0</b></div><div class="snake-eta" id="snake-eta" role="status" aria-live="off">Ориентировочно ещё 18 сек.</div></div></div><div class="snake-board"><canvas id="snake-canvas" width="640" height="320" role="img" aria-label="Игра Змейка. Собирай светящиеся точки и не врезайся в стены или себя."></canvas><div class="snake-overlay" id="snake-overlay" hidden><strong>Готов играть?</strong><span>Собирай точки и набирай очки</span><button id="snake-restart" type="button">Начать игру</button></div></div><div class="snake-game-footer"><span>Веди пальцем по полю, чтобы менять направление · на ПК — стрелки или WASD</span><span>Собирай ◆</span></div></div>`;
   startSnakeGame();
   const estimatedSeconds = Math.min(45, 18 + Math.floor(text.length / 350) + ($('detail').selectedIndex === 2 ? 7 : 0));
   startEtaTimer(estimatedSeconds);
