@@ -16,15 +16,27 @@ async function handlePrompt(request, env) {
   }
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Некорректный формат запроса.' }, 400); }
-  const { mode, text, target, detail, language, wishes } = body || {};
+  const { mode, text, target, detail, language, wishes, action } = body || {};
   const outputLanguage = language === 'en' ? 'English' : 'Russian';
   if (typeof text !== 'string' || !text.trim()) return json({ error: 'Напиши задачу или вставь свой промпт.' }, 400);
   if (text.length > 12000) return json({ error: 'Текст слишком длинный. Максимум — 12 000 символов.' }, 400);
 
-  const task = mode === 'improve'
-    ? `РЕЖИМ: УЛУЧШИТЬ ГОТОВЫЙ ПРОМПТ. Проанализируй исходный текст, сохрани его смысл и усили его. Исправь структуру, конкретику и инструкции. Если исходный текст уже хорош, не усложняй его без причины.\n\nИСХОДНЫЙ ПРОМПТ:\n${text}`
-    : `РЕЖИМ: СОЗДАТЬ ПРОМПТ С НУЛЯ. По описанию пользователя составь полноценный промпт, который можно сразу отправить выбранной ИИ-модели.\n\nЧТО ХОЧЕТ ПОЛЬЗОВАТЕЛЬ:\n${text}`;
-  const userContent = `${task}\n\nOUTPUT LANGUAGE: ${outputLanguage}. Write the entire final prompt in this language, regardless of the language of the user's description.\nЦЕЛЕВАЯ МОДЕЛЬ: ${safe(target, 120) || 'Универсальный ИИ'}\nУРОВЕНЬ ДЕТАЛИЗАЦИИ: ${safe(detail, 180) || 'Подробный и точный'}\nДОПОЛНИТЕЛЬНЫЕ ПОЖЕЛАНИЯ: ${safe(wishes, 500) || 'Нет'}`;
+  const actionInstructions = {
+    shorten: 'Сократи этот готовый промпт примерно на треть, сохранив смысл и все критически важные требования.',
+    expand: 'Расширь этот готовый промпт полезным контекстом, ясными шагами и критериями результата. Не выдумывай факты.',
+    detail: 'Добавь конкретику, ограничения, критерии качества и чёткий формат результата.',
+    style: 'Перепиши текст профессионально, ясно и естественно, сохранив исходное намерение.',
+    translate: language === 'ru' ? 'Переведи этот промпт на русский язык.' : 'Translate this prompt into natural English.'
+  };
+  const task = mode === 'action'
+    ? `РЕЖИМ: РЕДАКТИРОВАНИЕ ГОТОВОГО ПРОМПТА. ${actionInstructions[action] || 'Улучши этот промпт, сохранив смысл.'}\n\nИСХОДНЫЙ ПРОМПТ:\n${text}`
+    : mode === 'improve'
+      ? `РЕЖИМ: УЛУЧШИТЬ ГОТОВЫЙ ПРОМПТ. Проанализируй исходный текст, сохрани его смысл и усили его. Исправь структуру, конкретику и инструкции. Если исходный текст уже хорош, не усложняй его без причины.\n\nИСХОДНЫЙ ПРОМПТ:\n${text}`
+      : `РЕЖИМ: СОЗДАТЬ ПРОМПТ С НУЛЯ. По описанию пользователя составь полноценный промпт, который можно сразу отправить выбранной ИИ-модели.\n\nЧТО ХОЧЕТ ПОЛЬЗОВАТЕЛЬ:\n${text}`;
+  const variantInstruction = mode === 'action'
+    ? 'Верни один окончательный отредактированный промпт. Не добавляй пояснений.'
+    : 'Подготовь ТРИ самостоятельных варианта одного промпта: краткий, профессиональный и максимально подробный. Каждый должен быть готов к копированию и отличаться уровнем детализации, а не только названием. Верни ТОЛЬКО валидный JSON без Markdown и без code fence строго в формате: {"variants":[{"label":"Краткий","prompt":"..."},{"label":"Профессиональный","prompt":"..."},{"label":"Подробный","prompt":"..."}]}.';
+  const userContent = `${task}\n\nOUTPUT LANGUAGE: ${outputLanguage}. Write the entire final prompt(s) in this language, regardless of the language of the user's description.\n${variantInstruction}\nЦЕЛЕВАЯ МОДЕЛЬ: ${safe(target, 120) || 'Универсальный ИИ'}\nУРОВЕНЬ ДЕТАЛИЗАЦИИ: ${safe(detail, 180) || 'Подробный и точный'}\nДОПОЛНИТЕЛЬНЫЕ ПОЖЕЛАНИЯ: ${safe(wishes, 500) || 'Нет'}`;
 
   try {
     const upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -49,16 +61,32 @@ async function handlePrompt(request, env) {
     }
     const message = result.choices?.[0]?.message;
     const rawContent = message?.content;
-    const prompt = (typeof rawContent === 'string' ? rawContent : Array.isArray(rawContent) ? rawContent.map(part => typeof part === 'string' ? part : part?.text || '').join('') : '').trim();
-    if (!prompt) {
+    const content = (typeof rawContent === 'string' ? rawContent : Array.isArray(rawContent) ? rawContent.map(part => typeof part === 'string' ? part : part?.text || '').join('') : '').trim();
+    if (!content) {
       const finishReason = result.choices?.[0]?.finish_reason;
       const modelUsed = result.model || 'неизвестная модель';
       const detail = finishReason === 'length'
-        ? 'Модель потратила лимит токенов на внутреннее рассуждение и не успела выдать ответ. Снизили глубину рассуждения и увеличили лимит — попробуй ещё раз после обновления сайта.'
-        : `Модель ${modelUsed} вернула пустой ответ${finishReason ? ` (причина завершения: ${finishReason})` : ''}. Попробуй ещё раз.`;
+        ? 'Модель не успела выдать ответ из-за лимита токенов. Попробуй более краткий запрос.'
+        : `Модель ${modelUsed} вернула пустой ответ${finishReason ? ` (причина: ${finishReason})` : ''}. Попробуй ещё раз.`;
       return json({ error: detail }, 502);
     }
-    return json({ prompt });
+    if (mode === 'action') return json({ prompt: content.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/, '').trim() });
+    let parsed = null;
+    try {
+      const cleaned = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      const match = content.match(/\{[\s\S]*"variants"[\s\S]*\}/);
+      if (match) { try { parsed = JSON.parse(match[0]); } catch {} }
+    }
+    const variants = Array.isArray(parsed?.variants)
+      ? parsed.variants.filter(item => typeof item?.prompt === 'string' && item.prompt.trim()).slice(0, 3).map((item, index) => ({
+          label: safe(item.label, 30) || ['Краткий','Профессиональный','Подробный'][index],
+          prompt: item.prompt.trim()
+        }))
+      : [];
+    if (variants.length) return json({ prompt: variants[0].prompt, variants });
+    return json({ prompt: content });
   } catch {
     return json({ error: 'Не удалось связаться с ИИ-сервисом. Проверь соединение и попробуй снова.' }, 502);
   }
