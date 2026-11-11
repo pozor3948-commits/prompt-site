@@ -54,7 +54,9 @@ function startSnakeGame() {
       ctx.beginPath(); ctx.arc(x * cell + cell / 2, y * cell + cell / 2, 1.15, 0, Math.PI * 2); ctx.fill();
     }
     ctx.shadowBlur = 13; ctx.shadowColor = '#6de4d0'; ctx.fillStyle = '#6de4d0';
-    ctx.beginPath();\n    const fx = food.x * cell + cell / 2, fy = food.y * cell + cell / 2;\n    ctx.moveTo(fx, fy - 7); ctx.lineTo(fx + 6, fy); ctx.lineTo(fx, fy + 7); ctx.lineTo(fx - 6, fy); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    const fx = food.x * cell + cell / 2, fy = food.y * cell + cell / 2;
+    ctx.moveTo(fx, fy - 7); ctx.lineTo(fx + 6, fy); ctx.lineTo(fx, fy + 7); ctx.lineTo(fx - 6, fy); ctx.closePath(); ctx.fill();
     snake.forEach((part, index) => {
       ctx.shadowColor = index === 0 ? '#b9a4ff' : '#6de4d0';
       ctx.shadowBlur = index === 0 ? 15 : 8;
@@ -96,19 +98,19 @@ function startSnakeGame() {
     const keys = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
     if (keys[event.key]) { event.preventDefault(); turn(...keys[event.key]); }
   };
-  const onControl = event => {
-    const button = event.target.closest('[data-dir]');
-    if (!button) return;
-    const dirs = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-    turn(...dirs[button.dataset.dir]);
-  };
   document.addEventListener('keydown', onKey);
-  canvas.addEventListener('pointerdown', onPointerDown);\n  canvas.addEventListener('pointermove', onPointerMove);\n  canvas.addEventListener('pointerup', onPointerUp);\n  canvas.addEventListener('pointercancel', onPointerUp);
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointermove', onPointerMove);
+  canvas.addEventListener('pointerup', onPointerUp);
+  canvas.addEventListener('pointercancel', onPointerUp);
   restartBtn.addEventListener('click', reset);
   stopSnakeGame = () => {
     active = false; clearInterval(timer);
     document.removeEventListener('keydown', onKey);
-    canvas.removeEventListener('pointerdown', onPointerDown);\n    canvas.removeEventListener('pointermove', onPointerMove);\n    canvas.removeEventListener('pointerup', onPointerUp);\n    canvas.removeEventListener('pointercancel', onPointerUp);
+    canvas.removeEventListener('pointerdown', onPointerDown);
+    canvas.removeEventListener('pointermove', onPointerMove);
+    canvas.removeEventListener('pointerup', onPointerUp);
+    canvas.removeEventListener('pointercancel', onPointerUp);
     restartBtn.removeEventListener('click', reset);
     stopSnakeGame = null;
   };
