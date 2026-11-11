@@ -30,8 +30,9 @@ async function handlePrompt(request, env) {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://promptforge.pages.dev', 'X-Title': 'PromptForge' },
       body: JSON.stringify({
-        model: env.OPENROUTER_MODEL || 'nvidia/nemotron-3-ultra-550b-a55b:free',
+        model: env.OPENROUTER_MODEL || 'openrouter/free',
         temperature: 0.7,
+        max_tokens: 4096,
         messages: [ { role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: userContent } ]
       })
     });
@@ -44,7 +45,9 @@ async function handlePrompt(request, env) {
         : 'OpenRouter или выбранный провайдер вернул ошибку. Попробуй позже или проверь настройки модели.';
       return json({ error: message }, upstream.status === 429 ? 429 : 502);
     }
-    const prompt = result.choices?.[0]?.message?.content?.trim();
+    const message = result.choices?.[0]?.message;
+    const rawContent = message?.content;
+    const prompt = (typeof rawContent === 'string' ? rawContent : Array.isArray(rawContent) ? rawContent.map(part => typeof part === 'string' ? part : part?.text || '').join('') : '').trim();
     if (!prompt) return json({ error: 'ИИ не вернул текст. Попробуй ещё раз.' }, 502);
     return json({ prompt });
   } catch {
