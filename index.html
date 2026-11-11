@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090b12" />
+  <meta name="description" content="Создавай и улучшай промпты для любых ИИ — от одной идеи до готовой инструкции." />
+  <title>PromptForge — мастер промптов</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="PromptForge — главная"><span class="brand-mark">✳</span><span>prompt<span class="brand-accent">forge</span></span></a>
+    <div class="top-note"><span class="status-dot"></span> Твой конструктор промптов</div>
+    <a class="github-link" href="https://pages.cloudflare.com/" target="_blank" rel="noreferrer">Cloudflare Pages <span>↗</span></a>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="eyebrow"><span class="eyebrow-line"></span> ОТ ИДЕИ ДО СИЛЬНОГО ПРОМПТА</div>
+      <h1>Объясни, что хочешь.<br><span>ИИ сформулирует идеально.</span></h1>
+      <p class="hero-copy">Опиши задачу обычными словами — получи продуманный промпт для ChatGPT, Claude, Gemini, Midjourney и других ИИ.</p>
+      <div class="hero-tags"><span>✦ Создание с нуля</span><span>↗ Улучшение готового</span><span>⌘ Для любых задач</span></div>
+    </section>
+
+    <section class="workspace" aria-label="Конструктор промптов">
+      <div class="panel input-panel">
+        <div class="panel-heading"><div><span class="step">01</span><h2>Твоя задача</h2></div><span class="panel-hint">Расскажи своими словами</span></div>
+        <div class="mode-switch" role="tablist" aria-label="Режим работы">
+          <button class="mode active" data-mode="create" role="tab" aria-selected="true"><span>✦</span> Создать промпт</button>
+          <button class="mode" data-mode="improve" role="tab" aria-selected="false"><span>↗</span> Улучшить мой</button>
+        </div>
+        <label class="field-label" for="idea">Что нужно сделать?</label>
+        <textarea id="idea" rows="7" placeholder="Например: хочу, чтобы ИИ придумал дизайн главной страницы моего сайта в современном стиле. Нужны идеи по цветам, блокам и анимациям..." maxlength="12000"></textarea>
+        <div class="textarea-footer"><span id="char-count">0 / 12 000</span><button class="text-button" id="clear-btn" type="button">Очистить</button></div>
+
+        <div class="options-grid">
+          <div class="field-group"><label class="field-label" for="target">Для какого ИИ?</label><select id="target"><option value="Универсальный (подойдёт большинству ИИ)">Универсальный</option><option>ChatGPT</option><option>Claude</option><option>Gemini</option><option>DeepSeek</option><option>Midjourney</option><option>Flux</option><option>Suno</option><option>ИИ для программирования</option><option>Другой ИИ</option></select></div>
+          <div class="field-group"><label class="field-label" for="detail">Насколько подробно?</label><select id="detail"><option value="Подробный и точный">Подробно</option><option value="Кратко, без лишней воды">Кратко</option><option value="Максимально детально, с контекстом, ограничениями и критериями качества">Максимально детально</option></select></div>
+          <div class="field-group full"><label class="field-label" for="tone">Дополнительные пожелания <span class="optional">необязательно</span></label><input id="tone" type="text" placeholder="Например: профессиональный тон, без воды, результат на русском..." maxlength="500" /></div>
+        </div>
+        <button class="generate-btn" id="generate-btn" type="button"><span class="sparkle">✦</span><span id="generate-label">Создать сильный промпт</span><span class="btn-arrow">→</span></button>
+        <p class="privacy-note"><span>◇</span> Текст отправляется ИИ для обработки. Ключ API хранится на сервере, а не в браузере.</p>
+      </div>
+
+      <div class="panel result-panel">
+        <div class="panel-heading"><div><span class="step">02</span><h2>Готовый промпт</h2></div><span class="result-state" id="result-state"><i></i> Ожидает задачу</span></div>
+        <div class="result-content" id="result-content">
+          <div class="empty-visual"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="core">✳</div><span class="star star-a">✦</span><span class="star star-b">✧</span></div>
+          <h3>Здесь появится твой промпт</h3>
+          <p>Опиши идею слева и нажми<br>«Создать сильный промпт».</p>
+          <div class="empty-chips"><span>Роль ИИ</span><span>Контекст</span><span>Задача</span><span>Формат ответа</span></div>
+        </div>
+        <div class="result-footer" id="result-footer" hidden>
+          <span class="result-meta" id="result-meta">Готово к использованию</span>
+          <button class="copy-btn" id="copy-btn" type="button"><span>▢</span> Копировать</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="how-section"><div class="section-kicker">ПРОСТО И ПОНЯТНО</div><h2>Хороший результат начинается<br>с правильной формулировки.</h2><div class="steps-grid"><article><span class="step-icon">01</span><h3>Опиши задумку</h3><p>Не нужно знать специальные термины. Просто напиши, что хочешь получить.</p></article><article><span class="step-icon">02</span><h3>Настрой результат</h3><p>Выбери ИИ и уровень детализации. Добавь пожелания, если они есть.</p></article><article><span class="step-icon">03</span><h3>Забери промпт</h3><p>Скопируй готовую инструкцию и используй её в любом удобном ИИ.</p></article></div></section>
+  </main>
+  <footer><a class="brand footer-brand" href="#top"><span class="brand-mark">✳</span><span>prompt<span class="brand-accent">forge</span></span></a><span>Создавай точнее. Получай больше.</span><span class="footer-right">Работает на Cloudflare Pages</span></footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
