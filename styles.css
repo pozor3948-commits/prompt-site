@@ -25,3 +25,9 @@
 @keyframes snake-pulse{50%{opacity:.35;box-shadow:0 0 3px #6de4d0}}
 @media(max-width:800px){.snake-controls{display:flex}.snake-loading{max-width:560px}}
 @media(max-width:560px){.snake-loading-head{margin-bottom:12px}.snake-loading-head strong{font-size:12px}.snake-loading-head small{font-size:10px}.snake-game-footer{font-size:9px}.snake-controls button{width:42px;height:39px}}
+
+
+.snake-status-stack{display:grid;justify-items:end;gap:6px}
+.snake-eta{font-size:10px;color:#8de8d8;text-align:right;max-width:210px;line-height:1.4}
+.snake-eta.is-waiting{color:#c6b8ff}
+@media(max-width:560px){.snake-eta{font-size:9px;max-width:155px}}
