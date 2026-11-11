@@ -361,6 +361,7 @@ $('generate-btn').addEventListener('click', async () => {
     if (stopSnakeGame) stopSnakeGame();
     if (stopEtaTimer) stopEtaTimer();
     const variants = data.variants?.length ? data.variants : [{label:'Основной',prompt:data.prompt}];
+    currentRecordId = null;
     displayVariants(variants);
   } catch (error) {
     if (stopSnakeGame) stopSnakeGame();
@@ -377,7 +378,7 @@ $('generate-btn').addEventListener('click', async () => {
   }
 });
 
-document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', async () => {
+document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', async (event) => {
   if (!currentPrompt) return;
   const actions = {
     shorten:'Сократи промпт примерно на треть, сохранив все ключевые требования и смысл.',
