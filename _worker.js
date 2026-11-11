@@ -32,7 +32,8 @@ async function handlePrompt(request, env) {
       body: JSON.stringify({
         model: env.OPENROUTER_MODEL || 'openrouter/free',
         temperature: 0.7,
-        max_tokens: 4096,
+        max_tokens: 8192,
+        reasoning: { effort: 'low' },
         messages: [ { role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: userContent } ]
       })
     });
@@ -48,7 +49,14 @@ async function handlePrompt(request, env) {
     const message = result.choices?.[0]?.message;
     const rawContent = message?.content;
     const prompt = (typeof rawContent === 'string' ? rawContent : Array.isArray(rawContent) ? rawContent.map(part => typeof part === 'string' ? part : part?.text || '').join('') : '').trim();
-    if (!prompt) return json({ error: 'ИИ не вернул текст. Попробуй ещё раз.' }, 502);
+    if (!prompt) {
+      const finishReason = result.choices?.[0]?.finish_reason;
+      const modelUsed = result.model || 'неизвестная модель';
+      const detail = finishReason === 'length'
+        ? 'Модель потратила лимит токенов на внутреннее рассуждение и не успела выдать ответ. Снизили глубину рассуждения и увеличили лимит — попробуй ещё раз после обновления сайта.'
+        : `Модель ${modelUsed} вернула пустой ответ${finishReason ? ` (причина завершения: ${finishReason})` : ''}. Попробуй ещё раз.`;
+      return json({ error: detail }, 502);
+    }
     return json({ prompt });
   } catch {
     return json({ error: 'Не удалось связаться с ИИ-сервисом. Проверь соединение и попробуй снова.' }, 502);
