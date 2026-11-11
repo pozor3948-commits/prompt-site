@@ -380,20 +380,22 @@ $('generate-btn').addEventListener('click', async () => {
 
 document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', async (event) => {
   if (!currentPrompt) return;
+  const outputLanguage = button.dataset.action === 'translate' ? ($('language').value === 'ru' ? 'en' : 'ru') : $('language').value;
   const actions = {
     shorten:'Сократи промпт примерно на треть, сохранив все ключевые требования и смысл.',
     expand:'Расширь промпт: добавь полезный контекст, последовательность действий и критерии результата, не выдумывая факты.',
     detail:'Добавь конкретные детали, ограничения, критерии качества и формат результата.',
     style:'Перепиши промпт в более профессиональном, чётком и естественном стиле, сохранив смысл.',
-    translate:'Переведи промпт на ' + ($('language').value === 'ru' ? 'английский' : 'русский') + ' язык и адаптируй формулировки естественно.'
+    translate:'Переведи промпт на ' + (outputLanguage === 'ru' ? 'русский' : 'английский') + ' язык и адаптируй формулировки естественно.'
   };
   const button = event.currentTarget;
   button.disabled = true;
   const oldLabel = button.textContent;
   button.textContent = 'Обрабатываю…';
   try {
-    const data = await requestPrompt({mode:'action', action:button.dataset.action, text:currentPrompt, target:$('target').value, detail:$('detail').value, language:$('language').value, wishes:actions[button.dataset.action]});
+    const data = await requestPrompt({mode:'action', action:button.dataset.action, text:currentPrompt, target:$('target').value, detail:$('detail').value, language:outputLanguage, wishes:actions[button.dataset.action]});
     const variants = data.variants?.length ? data.variants : [{label:'Обновлённый',prompt:data.prompt}];
+    if (button.dataset.action === 'translate') $('language').value = outputLanguage;
     displayVariants(variants);
     toast('Промпт обновлён');
   } catch(error) { toast(error.message); }
