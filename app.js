@@ -61,7 +61,7 @@ function startSnakeGame() {
     direction = nextDirection;
     const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
     const eating = head.x === food.x && head.y === food.y;
-    if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows || snake.slice(0, eating ? undefined : -1).some(p => p.x === head.x && p.y === head.y)) return finish();
+    if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows || snake.slice(0, eating ? snake.length : -1).some(p => p.x === head.x && p.y === head.y)) return finish();
     snake.unshift(head);
     if (eating) { score += 1; scoreEl.textContent = String(score); food = randomFood(); }
     else snake.pop();
