@@ -34,6 +34,18 @@
           <button class="mode active" data-mode="create" role="tab" aria-selected="true"><span>✦</span> Создать промпт</button>
           <button class="mode" data-mode="improve" role="tab" aria-selected="false"><span>↗</span> Улучшить мой</button>
         </div>
+
+        <section class="template-picker" aria-label="Готовые шаблоны">
+          <div class="template-heading"><span class="field-label">Быстрый старт</span><span class="optional">выбери заготовку</span></div>
+          <div class="template-grid">
+            <button type="button" class="template-chip" data-template="website">🌐 Сайт</button>
+            <button type="button" class="template-chip" data-template="coding">💻 Код</button>
+            <button type="button" class="template-chip" data-template="image">🎨 Изображение</button>
+            <button type="button" class="template-chip" data-template="video">🎬 Видео</button>
+            <button type="button" class="template-chip" data-template="music">🎵 Музыка</button>
+            <button type="button" class="template-chip" data-template="business">📈 Бизнес</button>
+          </div>
+        </section>
         <label class="field-label" for="idea">Что нужно сделать?</label>
         <textarea id="idea" rows="7" placeholder="Например: хочу, чтобы ИИ придумал дизайн главной страницы моего сайта в современном стиле. Нужны идеи по цветам, блокам и анимациям..." maxlength="12000"></textarea>
         <div class="textarea-footer"><span id="char-count">0 / 12 000</span><button class="text-button" id="clear-btn" type="button">Очистить</button></div>
@@ -50,6 +62,26 @@
 
       <div class="panel result-panel">
         <div class="panel-heading"><div><span class="step">02</span><h2>Готовый промпт</h2></div><span class="result-state" id="result-state"><i></i> Ожидает задачу</span></div>
+
+        <div class="result-extras" id="result-extras" hidden>
+          <div class="quality-panel" id="quality-panel">
+            <div class="quality-top"><strong>Качество промпта</strong><b id="quality-score">—</b></div>
+            <div class="quality-track"><span id="quality-fill"></span></div>
+            <p id="quality-hint">Оценка структуры и конкретики</p>
+          </div>
+          <div class="variant-tabs" id="variant-tabs" role="tablist" aria-label="Варианты промпта"></div>
+          <div class="prompt-tools" id="prompt-tools">
+            <button type="button" data-action="shorten">Сократить</button>
+            <button type="button" data-action="expand">Расширить</button>
+            <button type="button" data-action="detail">Добавить детали</button>
+            <button type="button" data-action="style">Изменить стиль</button>
+            <button type="button" data-action="translate">Перевести</button>
+          </div>
+          <div class="result-save-row">
+            <button type="button" class="text-button" id="favorite-btn">☆ В избранное</button>
+            <span class="optional">Сохраняется в этом браузере</span>
+          </div>
+        </div>
         <div class="result-content" id="result-content">
           <div class="empty-visual"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="core">✳</div><span class="star star-a">✦</span><span class="star star-b">✧</span></div>
           <h3>Здесь появится твой промпт</h3>
@@ -63,6 +95,15 @@
       </div>
     </section>
 
+
+    <section class="library-section" id="prompt-library">
+      <div class="library-title"><div><span class="section-kicker">ТВОЯ КОЛЛЕКЦИЯ</span><h2>История и избранное</h2></div><span class="optional">Хранится локально в браузере</span></div>
+      <div class="library-tabs" role="tablist" aria-label="Сохранённые промпты">
+        <button type="button" class="library-tab active" data-library="history">История</button>
+        <button type="button" class="library-tab" data-library="favorites">Избранное</button>
+      </div>
+      <div class="library-list" id="library-list"><p class="library-empty">Здесь появятся созданные тобой промпты.</p></div>
+    </section>
     <section class="how-section"><div class="section-kicker">ПРОСТО И ПОНЯТНО</div><h2>Хороший результат начинается<br>с правильной формулировки.</h2><div class="steps-grid"><article><span class="step-icon">01</span><h3>Опиши задумку</h3><p>Не нужно знать специальные термины. Просто напиши, что хочешь получить.</p></article><article><span class="step-icon">02</span><h3>Настрой результат</h3><p>Выбери ИИ и уровень детализации. Добавь пожелания, если они есть.</p></article><article><span class="step-icon">03</span><h3>Забери промпт</h3><p>Скопируй готовую инструкцию и используй её в любом удобном ИИ.</p></article></div></section>
   </main>
   <footer><a class="brand footer-brand" href="#top"><span class="brand-mark">✳</span><span>prompt<span class="brand-accent">forge</span></span></a><span>Создавай точнее. Получай больше.</span><span class="footer-right">Работает на Cloudflare Pages</span></footer>
