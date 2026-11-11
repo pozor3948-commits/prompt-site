@@ -380,6 +380,7 @@ $('generate-btn').addEventListener('click', async () => {
 
 document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', async (event) => {
   if (!currentPrompt) return;
+  const button = event.currentTarget;
   const outputLanguage = button.dataset.action === 'translate' ? ($('language').value === 'ru' ? 'en' : 'ru') : $('language').value;
   const actions = {
     shorten:'Сократи промпт примерно на треть, сохранив все ключевые требования и смысл.',
@@ -388,7 +389,6 @@ document.querySelectorAll('[data-action]').forEach(button => button.addEventList
     style:'Перепиши промпт в более профессиональном, чётком и естественном стиле, сохранив смысл.',
     translate:'Переведи промпт на ' + (outputLanguage === 'ru' ? 'русский' : 'английский') + ' язык и адаптируй формулировки естественно.'
   };
-  const button = event.currentTarget;
   button.disabled = true;
   const oldLabel = button.textContent;
   button.textContent = 'Обрабатываю…';
