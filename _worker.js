@@ -98,10 +98,84 @@ function json(data, status = 200) {
 }
 
 
-export default {
+
+async function handleTelegram(request, env) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_WEBHOOK_SECRET) {
+    return new Response("Telegram bot is not configured", { status: 503 });
+  }
+  const suppliedSecret = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
+  if (suppliedSecret !== env.TELEGRAM_WEBHOOK_SECRET) {
+    return new Response("Forbidden", { status: 403 });
+  }
+  let update;
+  try { update = await request.json(); } catch { return new Response("Bad Request", { status: 400 }); }
+
+  const message = update.message;
+  const chatId = message?.chat?.id;
+  const incoming = typeof message?.text === "string" ? message.text.trim() : "";
+  if (!chatId || !incoming) return new Response("OK");
+
+  if (incoming === "/start" || incoming === "/help") {
+    await telegramSend(env, chatId,
+      "Привет! Я PromptForge — бот для создания промптов.\n\nПросто напиши, что хочешь сделать, и я подготовлю три варианта: краткий, профессиональный и подробный.\n\nПримеры:\n• Сделай промпт для создания сайта кофейни\n• Напиши промпт для реалистичного изображения автомобиля\n• Создай промпт для музыки в Suno");
+    return new Response("OK");
+  }
+
+  const promptRequest = new Request("https://promptforge.internal/api/prompt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mode: "create",
+      text: incoming.replace(/^\\/prompt\\s*/i, ""),
+      target: "Универсальный (подойдёт большинству ИИ)",
+      detail: "Подробный и точный",
+      language: "ru",
+      wishes: "Ответ предназначен для Telegram-бота. Формулируй промпт понятно и готовым к копированию."
+    })
+  });
+  const response = await handlePrompt(promptRequest, env);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.variants?.length) {
+    await telegramSend(env, chatId, data.error || "Не получилось создать промпт. Попробуй ещё раз.");
+    return new Response("OK");
+  }
+
+  const labels = ["КРАТКИЙ", "ПРОФЕССИОНАЛЬНЫЙ", "ПОДРОБНЫЙ"];
+  for (let i = 0; i < data.variants.length; i++) {
+    const item = data.variants[i];
+    const label = labels[i] || item.label || "ВАРИАНТ";
+    await telegramSendLong(env, chatId, `✦ ${label} ВАРИАНТ\n\n${item.prompt}`);
+  }
+  return new Response("OK");
+}
+
+async function telegramSend(env, chatId, text) {
+  const response = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text })
+  });
+  if (!response.ok) throw new Error("Telegram sendMessage failed");
+}
+
+async function telegramSendLong(env, chatId, text) {
+  const limit = 3900;
+  if (text.length <= limit) return telegramSend(env, chatId, text);
+  let rest = text;
+  while (rest.length) {
+    let cut = Math.min(limit, rest.length);
+    if (cut < rest.length) {
+      const boundary = rest.lastIndexOf("\\n", cut);
+      if (boundary > limit * 0.6) cut = boundary;
+    }
+    await telegramSend(env, chatId, rest.slice(0, cut));
+    rest = rest.slice(cut).replace(/^\\n+/, "");
+  }
+}
+\nexport default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/api/prompt") {
+    if (url.pathname === "/api/telegram/webhook") {\n      if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });\n      return handleTelegram(request, env);\n    }\n    if (url.pathname === "/api/prompt") {
       if (request.method !== "POST") {
         return new Response("Method Not Allowed", { status: 405, headers: { "Allow": "POST" } });
       }
