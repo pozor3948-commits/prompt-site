@@ -103,8 +103,7 @@ async function handleTelegram(request, env) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_WEBHOOK_SECRET) {
     return new Response("Telegram bot is not configured", { status: 503 });
   }
-  const suppliedSecret = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
-  if (suppliedSecret !== env.TELEGRAM_WEBHOOK_SECRET) {
+  if (request.headers.get("X-Telegram-Bot-Api-Secret-Token") !== env.TELEGRAM_WEBHOOK_SECRET) {
     return new Response("Forbidden", { status: 403 });
   }
   let update;
@@ -126,7 +125,7 @@ async function handleTelegram(request, env) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       mode: "create",
-      text: incoming.replace(/^\\/prompt\\s*/i, ""),
+      text: incoming.replace(/^\/prompt\s*/i, ""),
       target: "Универсальный (подойдёт большинству ИИ)",
       detail: "Подробный и точный",
       language: "ru",
@@ -144,16 +143,16 @@ async function handleTelegram(request, env) {
   for (let i = 0; i < data.variants.length; i++) {
     const item = data.variants[i];
     const label = labels[i] || item.label || "ВАРИАНТ";
-    await telegramSendLong(env, chatId, `✦ ${label} ВАРИАНТ\n\n${item.prompt}`);
+    await telegramSendLong(env, chatId, "✦ " + label + " ВАРИАНТ\n\n" + item.prompt);
   }
   return new Response("OK");
 }
 
 async function telegramSend(env, chatId, text) {
-  const response = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+  const response = await fetch("https://api.telegram.org/bot" + env.TELEGRAM_BOT_TOKEN + "/sendMessage", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text })
+    body: JSON.stringify({ chat_id: chatId, text: text })
   });
   if (!response.ok) throw new Error("Telegram sendMessage failed");
 }
@@ -165,17 +164,22 @@ async function telegramSendLong(env, chatId, text) {
   while (rest.length) {
     let cut = Math.min(limit, rest.length);
     if (cut < rest.length) {
-      const boundary = rest.lastIndexOf("\\n", cut);
+      const boundary = rest.lastIndexOf("\n", cut);
       if (boundary > limit * 0.6) cut = boundary;
     }
     await telegramSend(env, chatId, rest.slice(0, cut));
-    rest = rest.slice(cut).replace(/^\\n+/, "");
+    rest = rest.slice(cut).replace(/^\n+/, "");
   }
 }
-\nexport default {
+
+export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/api/telegram/webhook") {\n      if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });\n      return handleTelegram(request, env);\n    }\n    if (url.pathname === "/api/prompt") {
+    if (url.pathname === "/api/telegram/webhook") {
+      if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+      return handleTelegram(request, env);
+    }
+    if (url.pathname === "/api/prompt") {
       if (request.method !== "POST") {
         return new Response("Method Not Allowed", { status: 405, headers: { "Allow": "POST" } });
       }
